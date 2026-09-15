@@ -75,21 +75,18 @@
   .verdict b{display:block;font-family:var(--serif);font-size:17px;margin-bottom:4px}
   #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .note{background:rgba(169,129,47,.1);border:1px solid rgba(169,129,47,.3);border-radius:11px;padding:13px 16px;font-size:13px;line-height:1.5;color:#6d5118;margin-bottom:20px;display:flex;gap:10px}
   .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
-  .btn-ghost .spinner,.btn-primary.light .spinner{border-color:var(--line-strong);border-top-color:var(--oxblood)}
+  .btn-ghost .spinner{border-color:var(--line-strong);border-top-color:var(--oxblood)}
   @keyframes spin{to{transform:rotate(360deg)}}
   .gate{max-width:640px;margin:60px auto;text-align:center;padding:0 22px}
   .gate .seal{width:64px;height:64px;font-size:30px;margin:0 auto 22px}
   .gate h2{font-family:var(--serif);font-size:30px;margin:0 0 12px}
   .gate p{color:var(--ink-soft);font-size:15.5px;line-height:1.6;margin:0 auto 26px;max-width:52ch}
-  .gate .card{text-align:left;margin-top:24px}
   .gbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line-strong);background:#fff;color:var(--ink);padding:12px 22px;border-radius:10px;font-weight:600;font-size:15px}
   .gbtn:hover{background:#f6f3ec}
   .gmark{font-weight:700;font-size:17px}.gmark .b{color:#4285F4}.gmark .r{color:#EA4335}.gmark .y{color:#FBBC05}.gmark .g{color:#34A853}
-  code{background:rgba(33,29,24,.07);padding:2px 6px;border-radius:5px;font-size:13px}
   @media(max-width:560px){.brand small{display:none}main{padding:20px 14px}.bar{padding:12px 14px}}
-  @media print{header,.tabs,.drop,.verdict,.note{display:none!important}.view{display:block!important}body{background:#fff}}
+  @media print{header,.tabs,.drop,.verdict{display:none!important}.view{display:block!important}body{background:#fff}}
 </style>
 </head>
 <body>
@@ -163,8 +160,9 @@ const FIREBASE_CONFIG = {
   appId: "1:310063147908:web:b339d0e3443b01b3f70bd1"
 };
 
-const GEMINI_KEY   = "AQ.Ab8RN6JBEOk4O0afYAUXsLAXnKV8yWZ1hm0MMNjAs8KaCZCneA";
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_KEY = "AQ.Ab8RN6JBEOk4O0afYAUXsLAXnKV8yWZ1hm0MMNjAs8KaCZCneA";
+// The app tries these in order until one works, so it never depends on a single model.
+const GEMINI_MODELS = ["gemini-flash-latest","gemini-2.5-flash","gemini-2.5-pro","gemini-2.5-flash-lite","gemini-3-flash-preview"];
 
 const FB_VER='https://www.gstatic.com/firebasejs/10.12.0';
 let auth,db,me=null,topicsCache=[],materialCache=null;
@@ -178,21 +176,32 @@ let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add(
 
 function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
 function parseJSON(t){if(!t)return null;try{return JSON.parse(t);}catch(e){}const m=t.match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0]);}catch(_){}}return null;}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
 async function gemini(parts){
   const body={contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',temperature:0.35}};
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-  let r;try{r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify(body)});}
-  catch(e){throw new Error("Couldn't reach the AI. Check your internet connection.");}
-  if(!r.ok){const t=await r.text();if(r.status===400&&/API key/i.test(t))throw new Error('The Gemini API key was rejected.');if(r.status===429)throw new Error('The free AI limit was hit for now. Try again shortly.');throw new Error('AI error '+r.status);}
-  const d=await r.json();return(d?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+  let lastMsg="the AI is unavailable right now";
+  for(const model of GEMINI_MODELS){
+    for(let attempt=0;attempt<3;attempt++){
+      let r;
+      try{
+        r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify(body)});
+      }catch(e){throw new Error("Couldn't reach the AI. Check your internet connection.");}
+      if(r.ok){const d=await r.json();return(d?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');}
+      const t=await r.text();
+      if(r.status===400&&/API key/i.test(t)){throw new Error('The Gemini API key was rejected.');}
+      if(r.status===404||r.status===403){lastMsg="model unavailable";break;}
+      if(r.status===503||r.status===500||r.status===429){lastMsg="the AI is busy (error "+r.status+")";await sleep(2000*(attempt+1));continue;}
+      lastMsg='AI error '+r.status;break;
+    }
+  }
+  throw new Error(lastMsg.charAt(0).toUpperCase()+lastMsg.slice(1)+". Please wait a moment and try again.");
 }
 
 function showGate(html){$('gate').innerHTML=html;$('gate').style.display='block';$('app').style.display='none';}
 function hideGate(){$('gate').style.display='none';$('app').style.display='block';}
-
-function gatePreview(){
-  showGate(`<div class="gate"><div class="seal">O</div><h2>Loading failed</h2><p>Couldn't load the sign-in libraries. If you're viewing this inside a preview window, open the live web address instead.</p></div>`);
-}
+function gatePreview(){showGate(`<div class="gate"><div class="seal">O</div><h2>Loading failed</h2><p>Couldn't load the sign-in libraries. Open the live web address (not a preview window).</p></div>`);}
 function gateSignIn(){
   showGate(`<div class="gate"><div class="seal">O</div><h2>Sign in to see the board</h2><p>Use your school Google account so classmates can see whose topic is whose. Everyone signs into the same shared board.</p><button class="gbtn" id="googleSignIn"><span class="gmark"><span class="b">G</span><span class="r">o</span><span class="y">o</span><span class="b">g</span><span class="g">l</span><span class="r">e</span></span> Sign in with Google</button></div>`);
   $('googleSignIn').onclick=async()=>{
@@ -224,7 +233,7 @@ function wireDrop(){
 async function handlePDF(file){
   if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf')){toast('Please choose a PDF file');return;}
   const row=$('fileRow');row.style.display='flex';
-  row.innerHTML=`<span style="font-size:22px">&#128196;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint">Reading&hellip; this can take a moment</div></div><span class="spinner" style="border-color:var(--line-strong);border-top-color:var(--oxblood)"></span>`;
+  row.innerHTML=`<span style="font-size:22px">&#128196;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint">Reading&hellip; this can take up to a minute</div></div><span class="spinner" style="border-color:var(--line-strong);border-top-color:var(--oxblood)"></span>`;
   try{
     const b64=await fileToBase64(file);
     const prompt=`You are helping a history class prepare for oral exams. Analyze the attached source document thoroughly. Return ONLY JSON: {"summary":"3-4 sentence plain-English overview","keyThemes":["5 to 8 short theme phrases"],"suggestedTopics":[{"title":"a specific distinct oral topic","angle":"one short sentence on why it's a good oral topic"}]}. Give 6 to 10 distinct suggested topics.`;
