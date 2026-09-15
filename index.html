@@ -86,4 +86,228 @@
   .gate .card{text-align:left;margin-top:24px}
   .gbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line-strong);background:#fff;color:var(--ink);padding:12px 22px;border-radius:10px;font-weight:600;font-size:15px}
   .gbtn:hover{background:#f6f3ec}
-  .gmark{font-weight:700;font-size:
+  .gmark{font-weight:700;font-size:17px}.gmark .b{color:#4285F4}.gmark .r{color:#EA4335}.gmark .y{color:#FBBC05}.gmark .g{color:#34A853}
+  code{background:rgba(33,29,24,.07);padding:2px 6px;border-radius:5px;font-size:13px}
+  @media(max-width:560px){.brand small{display:none}main{padding:20px 14px}.bar{padding:12px 14px}}
+  @media print{header,.tabs,.drop,.verdict,.note{display:none!important}.view{display:block!important}body{background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <div class="seal">O</div>
+      <div><h1>The Orals Board</h1><small>History Oral Exam Prep</small></div>
+    </div>
+    <div class="spacer"></div>
+    <div id="authSlot"></div>
+  </div>
+</header>
+
+<div id="gate"></div>
+
+<main id="app" style="display:none">
+  <div class="tabs">
+    <button class="tab active" data-view="material">&#128218; The Material</button>
+    <button class="tab" data-view="claim">&#9997;&#65039; Claim a Topic</button>
+    <button class="tab" data-view="board">&#128204; The Board <span class="count" id="boardCount">0</span></button>
+  </div>
+
+  <section class="view active" id="view-material">
+    <div class="card">
+      <h2 class="section">The material this oral is based on</h2>
+      <p class="lead">Upload the PDF your teacher gave you. The AI reads it and pulls out the main themes and a set of good oral topics. This is shared with the whole class.</p>
+      <div class="drop" id="drop">
+        <div class="ic">&#128196;</div>
+        <b>Drop a PDF here or click to choose</b>
+        <div class="hint">Your class handout, chapter, or reading &middot; PDF only</div>
+        <input type="file" id="pdfInput" accept=".pdf,application/pdf" hidden />
+      </div>
+      <div id="fileRow" style="display:none;margin-top:16px;align-items:center;gap:12px"></div>
+    </div>
+    <div id="materialResult" style="margin-top:20px"></div>
+  </section>
+
+  <section class="view" id="view-claim">
+    <div class="card">
+      <h2 class="section">Claim your oral topic</h2>
+      <p class="lead">Say what you want to present on. The AI checks it against everything the class has already claimed. If it's the same or similar, it tells you it's taken; if you're clear, it writes your summary and adds your card.</p>
+      <div class="row" style="margin-bottom:16px">
+        <label class="fld" for="topicTitle">Your topic</label>
+        <input type="text" id="topicTitle" placeholder="e.g. The causes of the French Revolution" maxlength="120" />
+      </div>
+      <div class="row" style="margin-bottom:18px">
+        <label class="fld" for="topicNotes">Anything specific you'll focus on (optional)</label>
+        <textarea id="topicNotes" placeholder="e.g. I want to focus on the financial crisis and the Estates-General."></textarea>
+      </div>
+      <button class="btn btn-primary" id="submitTopic">Check &amp; claim topic</button>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-board">
+    <h2 class="section" style="margin-bottom:16px">Claimed topics</h2>
+    <div id="boardWrap"></div>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<script type="module">
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDD-4jhLTQfdBmLYcPgewFbZuLfgYLZU3g",
+  authDomain: "easy-oral.firebaseapp.com",
+  projectId: "easy-oral",
+  storageBucket: "easy-oral.firebasestorage.app",
+  messagingSenderId: "310063147908",
+  appId: "1:310063147908:web:b339d0e3443b01b3f70bd1"
+};
+
+const GEMINI_KEY   = "AQ.Ab8RN6KVVNRbNyd9lvGCmOG0QQfjNKGNlisazdeD6H8j3WmzZg";
+const GEMINI_MODEL = "gemini-2.0-flash";
+
+const FB_VER='https://www.gstatic.com/firebasejs/10.12.0';
+let auth,db,me=null,topicsCache=[],materialCache=null;
+let FB={};
+
+const $=id=>document.getElementById(id);
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function initials(n){return(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+function timeAgo(ts){if(!ts)return'just now';const s=(Date.now()-ts)/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
+
+function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
+function parseJSON(t){if(!t)return null;try{return JSON.parse(t);}catch(e){}const m=t.match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0]);}catch(_){}}return null;}
+async function gemini(parts){
+  const body={contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',temperature:0.35}};
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+  let r;try{r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify(body)});}
+  catch(e){throw new Error("Couldn't reach the AI. Check your internet connection.");}
+  if(!r.ok){const t=await r.text();if(r.status===400&&/API key/i.test(t))throw new Error('The Gemini API key was rejected.');if(r.status===429)throw new Error('The free AI limit was hit for now. Try again shortly.');throw new Error('AI error '+r.status);}
+  const d=await r.json();return(d?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+}
+
+function showGate(html){$('gate').innerHTML=html;$('gate').style.display='block';$('app').style.display='none';}
+function hideGate(){$('gate').style.display='none';$('app').style.display='block';}
+
+function gatePreview(){
+  showGate(`<div class="gate"><div class="seal">O</div><h2>Loading failed</h2><p>Couldn't load the sign-in libraries. If you're viewing this inside a preview window, open the live web address instead.</p></div>`);
+}
+function gateSignIn(){
+  showGate(`<div class="gate"><div class="seal">O</div><h2>Sign in to see the board</h2><p>Use your school Google account so classmates can see whose topic is whose. Everyone signs into the same shared board.</p><button class="gbtn" id="googleSignIn"><span class="gmark"><span class="b">G</span><span class="r">o</span><span class="y">o</span><span class="b">g</span><span class="g">l</span><span class="r">e</span></span> Sign in with Google</button></div>`);
+  $('googleSignIn').onclick=async()=>{
+    try{await FB.signInWithPopup(auth,new FB.GoogleAuthProvider());}
+    catch(e){toast(e.code==='auth/unauthorized-domain'?'This web address is not authorized in Firebase yet.':'Sign-in failed. Try again.');}
+  };
+}
+
+function renderAuth(){
+  const slot=$('authSlot');
+  if(me){
+    const av=me.photoURL?`<img class="avatar" src="${esc(me.photoURL)}" alt="">`:`<span class="avatar" style="background:var(--oxblood)">${esc(initials(me.displayName))}</span>`;
+    slot.innerHTML=`<div class="userchip">${av}${esc((me.displayName||'You').split(' ')[0])}<button class="btn btn-ghost btn-sm" id="signOut" style="margin-left:4px;padding:3px 8px">Sign out</button></div>`;
+    $('signOut').onclick=()=>FB.signOut(auth);
+  }else slot.innerHTML='';
+}
+
+function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view));
+
+function wireDrop(){
+  const drop=$('drop'),pdfInput=$('pdfInput');
+  drop.onclick=()=>pdfInput.click();
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot');};
+  drop.ondragleave=()=>drop.classList.remove('hot');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');if(e.dataTransfer.files[0])handlePDF(e.dataTransfer.files[0]);};
+  pdfInput.onchange=()=>{if(pdfInput.files[0])handlePDF(pdfInput.files[0]);};
+}
+async function handlePDF(file){
+  if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf')){toast('Please choose a PDF file');return;}
+  const row=$('fileRow');row.style.display='flex';
+  row.innerHTML=`<span style="font-size:22px">&#128196;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint">Reading&hellip; this can take a moment</div></div><span class="spinner" style="border-color:var(--line-strong);border-top-color:var(--oxblood)"></span>`;
+  try{
+    const b64=await fileToBase64(file);
+    const prompt=`You are helping a history class prepare for oral exams. Analyze the attached source document thoroughly. Return ONLY JSON: {"summary":"3-4 sentence plain-English overview","keyThemes":["5 to 8 short theme phrases"],"suggestedTopics":[{"title":"a specific distinct oral topic","angle":"one short sentence on why it's a good oral topic"}]}. Give 6 to 10 distinct suggested topics.`;
+    const raw=await gemini([{text:prompt},{inline_data:{mime_type:'application/pdf',data:b64}}]);
+    const data=parseJSON(raw);
+    if(!data||!data.summary)throw new Error('Could not read that PDF. Try a clearer, text-based PDF.');
+    await FB.setDoc(FB.doc(db,'material','current'),{fileName:file.name,summary:data.summary,keyThemes:data.keyThemes||[],suggestedTopics:data.suggestedTopics||[],updatedBy:me.displayName||'',at:FB.serverTimestamp()});
+    row.innerHTML=`<span style="font-size:22px">&#9989;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint">Analyzed and shared with the class</div></div>`;
+    toast('Material analyzed & shared');
+  }catch(e){row.innerHTML=`<span style="font-size:22px">&#9888;&#65039;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint" style="color:var(--oxblood)">${esc(e.message)}</div></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('pdfInput').click()">Try again</button>`;}
+}
+function renderMaterial(){
+  const m=materialCache,wrap=$('materialResult');
+  if(!m){wrap.innerHTML='';return;}
+  wrap.innerHTML=`<div class="card"><h2 class="section" style="font-size:22px">What this material covers</h2>
+    <p style="font-size:15px;line-height:1.6;color:var(--ink-soft);margin:0 0 20px">${esc(m.summary)}</p>
+    <label class="fld">Key themes</label><div class="theme-chips">${(m.keyThemes||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')||'<span class="hint">None found</span>'}</div>
+    <label class="fld" style="margin-top:22px">Good topics to claim</label>
+    <div class="suggested">${(m.suggestedTopics||[]).map(s=>`<div class="sg"><h4>${esc(s.title)}</h4><p>${esc(s.angle||'')}</p><button class="btn btn-ghost btn-sm claimSuggest" data-t="${esc(s.title)}">Claim this &rarr;</button></div>`).join('')}</div></div>`;
+  wrap.querySelectorAll('.claimSuggest').forEach(b=>b.onclick=()=>{switchView('claim');$('topicTitle').value=b.dataset.t;$('verdict').className='verdict';$('topicTitle').focus();});
+}
+
+$('submitTopic').onclick=submitTopic;
+async function submitTopic(){
+  const title=$('topicTitle').value.trim(),notes=$('topicNotes').value.trim(),verdict=$('verdict');
+  if(!title){toast('Type your topic first');return;}
+  const btn=$('submitTopic');verdict.className='verdict';btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Checking&hellip;';
+  try{
+    const prompt=`You manage oral-exam topic sign-ups for a history class. Two students must not present the same or a substantially overlapping topic.
+CLASS MATERIAL SUMMARY: ${materialCache?materialCache.summary:'(none uploaded)'}
+ALREADY CLAIMED TOPICS: ${JSON.stringify(topicsCache.map(t=>t.title))}
+A student wants to claim: "${title}". Their notes: "${notes||'none'}".
+Judge overlap by MEANING, not exact wording. Return ONLY JSON: {"duplicate":true or false,"matchedTitle":"the claimed topic it clashes with, or null","reason":"one friendly sentence for the student","cleanTitle":"a tidy version of their topic title","summary":"if NOT duplicate: 3-4 sentence summary grounded in the material; else empty"}`;
+    const result=parseJSON(await gemini([{text:prompt}]))||{};
+    if(result.duplicate){
+      const owner=topicsCache.find(t=>t.title===result.matchedTitle)||topicsCache.find(t=>(t.title||'').toLowerCase()===(result.matchedTitle||'').toLowerCase());
+      verdict.className='verdict taken show';
+      verdict.innerHTML=`<b>&#128683; That topic is already taken</b>${esc(result.reason||'Someone already claimed a very similar topic.')}${owner?` <br><br>Claimed as <b>"${esc(owner.title)}"</b> by <b>${esc(owner.ownerName)}</b>. Try a different angle or subject.`:''}`;
+    }else{
+      await FB.addDoc(FB.collection(db,'topics'),{title:(result.cleanTitle||title).slice(0,140),summary:result.summary||notes||'',ownerName:me.displayName||'',ownerEmail:me.email||'',ownerPhoto:me.photoURL||'',ownerUid:me.uid,at:FB.serverTimestamp()});
+      verdict.className='verdict ok show';
+      verdict.innerHTML=`<b>&#9989; Topic claimed &mdash; it's yours!</b>"${esc(result.cleanTitle||title)}" is now on the shared board under your name.${result.summary?`<br><br><b style="font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink-soft)">YOUR SUMMARY</b><br>${esc(result.summary)}`:''}`;
+      $('topicTitle').value='';$('topicNotes').value='';toast('Topic added to the board');
+    }
+  }catch(e){verdict.className='verdict taken show';verdict.innerHTML=`<b>&#9888;&#65039; Couldn't check right now</b>${esc(e.message)}`;}
+  finally{btn.disabled=false;btn.textContent='Check & claim topic';}
+}
+
+function renderBoard(){
+  const topics=topicsCache.slice().sort((a,b)=>(b.atMs||0)-(a.atMs||0));
+  $('boardCount').textContent=topics.length;
+  const wrap=$('boardWrap');
+  if(!topics.length){wrap.innerHTML=`<div class="empty"><div class="ic">&#128204;</div><b>No topics claimed yet</b><div>Head to "Claim a Topic" to be the first.</div></div>`;return;}
+  wrap.innerHTML=`<div class="board">${topics.map(t=>{
+    const av=t.ownerPhoto?`<img class="avatar" style="width:22px;height:22px" src="${esc(t.ownerPhoto)}" alt="">`:`<span class="avatar" style="width:22px;height:22px;font-size:10px;background:var(--oxblood)">${esc(initials(t.ownerName))}</span>`;
+    return `<div class="topic"><h3>${esc(t.title)}</h3><div class="body">${esc(t.summary)||'<i style="opacity:.6">No summary</i>'}</div>
+      <div class="foot"><span class="owner">${av}${esc(t.ownerName)}<span class="when">&middot; ${timeAgo(t.atMs)}</span></span>
+      ${me&&me.uid===t.ownerUid?`<button class="trash" data-id="${t.id}" title="Remove your topic">&#128465;&#65039;</button>`:''}</div></div>`;
+  }).join('')}</div>`;
+  wrap.querySelectorAll('.trash').forEach(b=>b.onclick=async()=>{await FB.deleteDoc(FB.doc(db,'topics',b.dataset.id));toast('Topic removed');});
+}
+
+async function boot(){
+  let appMod,authMod,fsMod;
+  try{
+    [appMod,authMod,fsMod]=await Promise.all([import(`${FB_VER}/firebase-app.js`),import(`${FB_VER}/firebase-auth.js`),import(`${FB_VER}/firebase-firestore.js`)]);
+  }catch(e){gatePreview();return;}
+  Object.assign(FB,authMod,fsMod);
+  const app=appMod.initializeApp(FIREBASE_CONFIG);
+  auth=authMod.getAuth(app);db=fsMod.getFirestore(app);
+  wireDrop();
+  authMod.onAuthStateChanged(auth,u=>{
+    me=u;renderAuth();
+    if(!u){gateSignIn();return;}
+    hideGate();
+    fsMod.onSnapshot(fsMod.collection(db,'topics'),snap=>{
+      topicsCache=snap.docs.map(d=>{const x=d.data();return{id:d.id,...x,atMs:x.at&&x.at.toMillis?x.at.toMillis():Date.now()};});
+      renderBoard();
+    });
+    fsMod.onSnapshot(fsMod.doc(db,'material','current'),d=>{materialCache=d.exists()?d.data():null;renderMaterial();});
+  });
+}
+boot();
+</script>
+</body>
+</html>
