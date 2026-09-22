@@ -82,6 +82,11 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .scrim{position:fixed;inset:0;background:rgba(33,29,24,.5);backdrop-filter:blur(3px);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+  .scrim.show{display:flex}
+  .scrim .modal{background:var(--card);border-radius:16px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:fade .2s}
+  .scrim .modal .msg{font-size:15.5px;line-height:1.5;margin:0 0 20px;color:var(--ink)}
+  .scrim .modal .mrow{display:flex;gap:8px;justify-content:flex-end}
   .gate{max-width:620px;margin:50px auto;text-align:center;padding:0 22px}
   .gate .seal{width:64px;height:64px;font-size:30px;margin:0 auto 22px}
   .gate h2{font-family:var(--serif);font-size:29px;margin:0 0 12px}
@@ -178,15 +183,34 @@ function timeAgo(ts){if(!ts)return'just now';const s=(Date.now()-ts)/1000;if(s<6
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3600);}
 
+// In-app confirmation (replaces window.confirm, which some browsers block)
+function confirmDialog(message,okText){
+  return new Promise(res=>{
+    let s=document.getElementById('confirmScrim');
+    if(!s){s=document.createElement('div');s.id='confirmScrim';s.className='scrim';document.body.appendChild(s);}
+    s.innerHTML=`<div class="modal"><p class="msg"></p><div class="mrow"><button class="btn btn-ghost" id="cCancel">Cancel</button><button class="btn btn-danger" id="cOk"></button></div></div>`;
+    s.querySelector('.msg').textContent=message;
+    s.querySelector('#cOk').textContent=okText||'Confirm';
+    s.classList.add('show');
+    const done=v=>{s.classList.remove('show');res(v);};
+    s.querySelector('#cOk').onclick=()=>done(true);
+    s.querySelector('#cCancel').onclick=()=>done(false);
+    s.onclick=e=>{if(e.target===s)done(false);};
+  });
+}
+
+/* -------- roles helpers -------- */
 const isOwner =()=> me && lc(me.email)===lc(OWNER_EMAIL);
 const isAdmin =()=> isOwner() || (me && roles.admins.map(lc).includes(lc(me.email)));
 const isBanned=(email)=> roles.banned.map(lc).includes(lc(email));
 
+/* -------- in-app browser detection -------- */
 function inAppBrowser(){
   const ua=navigator.userAgent||'';
   return /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|Snapchat|MicroMessenger|TikTok|Twitter|Pinterest|; wv\)/i.test(ua);
 }
 
+/* -------- Gemini (similarity only) -------- */
 function parseJSON(t){if(!t)return null;try{return JSON.parse(t);}catch(e){}const m=t.match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0]);}catch(_){}}return null;}
 async function gemini(prompt){
   const body={contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.2}};
@@ -197,15 +221,16 @@ async function gemini(prompt){
       catch(e){throw new Error('network');}
       if(r.ok){const d=await r.json();return(d?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');}
       if(r.status===503||r.status===500||r.status===429){await sleep(1200*(a+1));continue;}
-      break;
+      break; // 404/403/400 -> try next model
     }
   }
   throw new Error('unavailable');
 }
 
+/* -------- similarity checks -------- */
 function localMatch(title){
   const toks=s=>new Set(lc(s).replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2));
-  const A=toks(title); if(! A.size)return null;
+  const A=toks(title); if(!A.size)return null;
   let best=null,bestScore=0;
   for(const t of topicsCache){
     const B=toks(t.title);if(!B.size)continue;
@@ -229,6 +254,7 @@ Return ONLY JSON: {"overlap": true or false, "matchedTitle": "the existing topic
   return null;
 }
 
+/* -------- gates (all with clear next steps) -------- */
 function showGate(html){$('gate').innerHTML=html;$('gate').style.display='block';$('app').style.display='none';}
 function hideGate(){$('gate').style.display='none';$('app').style.display='block';}
 
@@ -274,6 +300,7 @@ function gateBanned(){
   $('boSignOut').onclick=()=>FB.signOut(auth);
 }
 
+/* -------- auth chip -------- */
 function renderAuth(){
   const slot=$('authSlot');
   if(me){
@@ -283,9 +310,11 @@ function renderAuth(){
   }else slot.innerHTML='';
 }
 
+/* -------- tabs -------- */
 function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));}
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view));
 
+/* -------- posting (warn, never block) -------- */
 let pending=null;
 $('submitTopic').onclick=()=>doPost(false);
 async function doPost(force){
@@ -295,7 +324,7 @@ async function doPost(force){
     verdict.className='verdict';btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Checking for overlaps…';
     let warn=null;
     try{warn=await aiMatch(title,notes);}
-    catch(e){warn=localMatch(title);}
+    catch(e){warn=localMatch(title);}       // AI busy -> fall back to word matching
     btn.disabled=false;btn.textContent='Post topic';
     if(warn){
       pending={title,notes};
@@ -306,6 +335,7 @@ async function doPost(force){
       return;
     }
   }
+  // save
   const btn2=$('submitTopic');btn2.disabled=true;btn2.innerHTML='<span class="spinner"></span> Posting…';
   try{
     await FB.addDoc(FB.collection(db,'topics'),{title:(pending?pending.title:title).slice(0,140),notes:(pending?pending.notes:notes).slice(0,400),ownerName:me.displayName||'',ownerEmail:me.email||'',ownerPhoto:me.photoURL||'',ownerUid:me.uid,at:FB.serverTimestamp()});
@@ -319,6 +349,7 @@ async function doPost(force){
   }finally{const b=$('submitTopic');b.disabled=false;b.textContent='Post topic';}
 }
 
+/* -------- board -------- */
 function renderBoard(){
   const topics=topicsCache.slice().sort((a,b)=>(b.atMs||0)-(a.atMs||0));
   $('boardCount').textContent=topics.length;
@@ -334,15 +365,16 @@ function renderBoard(){
       <div class="foot"><span class="owner">${av}<span class="nm">${esc(t.ownerName)}</span><span class="when">&middot; ${timeAgo(t.atMs)}</span></span>
       <span class="post-actions">${actions}</span></div></div>`;
   }).join('')}</div>`;
-  wrap.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{if(confirm('Delete this post?')){try{await FB.deleteDoc(FB.doc(db,'topics',b.dataset.id));toast('Post deleted');}catch(e){toast('Couldn’t delete — try again.');}}});
+  wrap.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{if(await confirmDialog('Delete this post?','Delete')){try{await FB.deleteDoc(FB.doc(db,'topics',b.dataset.id));toast('Post deleted');}catch(e){toast('Couldn’t delete — check your connection and try again.');}}});
   wrap.querySelectorAll('.ban').forEach(b=>b.onclick=()=>banEmail(b.dataset.email,b.dataset.name));
 }
 
+/* -------- admin actions -------- */
 async function saveRoles(part){try{await FB.setDoc(FB.doc(db,'config','roles'),part,{merge:true});}catch(e){toast('Couldn’t save — check your connection and retry.');throw e;}}
 async function banEmail(email,name){
   if(!email){toast('That post has no email attached.');return;}
   if(lc(email)===lc(OWNER_EMAIL)){toast('You can’t ban the owner.');return;}
-  if(!confirm('Ban '+(name||email)+'? They won’t be able to use the board until unbanned.'))return;
+  if(!(await confirmDialog('Ban '+(name||email)+'? They won’t be able to use the board until unbanned.','Ban')))return;
   await saveRoles({banned:FB.arrayUnion(lc(email))});
   toast((name||email)+' has been banned');
 }
@@ -355,7 +387,7 @@ async function grantAdmin(email){
 }
 async function removeAdmin(email){await saveRoles({admins:FB.arrayRemove(lc(email))});toast('Removed admin '+email);}
 async function resetBoard(){
-  if(!confirm('Reset the board? This permanently deletes ALL posts for everyone. Use this after a class.'))return;
+  if(!(await confirmDialog('Reset the board? This permanently deletes ALL posts for everyone. Use this after a class.','Reset board')))return;
   toast('Resetting the board…');
   try{
     const snap=await FB.getDocs(FB.collection(db,'topics'));
@@ -364,6 +396,7 @@ async function resetBoard(){
   }catch(e){toast('Couldn’t fully reset — check connection and try again.');}
 }
 
+/* -------- admin panel -------- */
 function renderAdmin(){
   const admin=isAdmin();
   $('adminTab').style.display=admin?'':'none';
@@ -390,15 +423,17 @@ function renderAdmin(){
   }
 }
 
+/* -------- access control -------- */
 function applyAccess(){
   renderAuth();
   if(!me){gateSignIn();return;}
-  if(!rolesLoaded)return;
+  if(!rolesLoaded)return;              // wait until we know roles before deciding
   if(isBanned(me.email)){gateBanned();return;}
   hideGate();
   renderAdmin();renderBoard();
 }
 
+/* -------- boot -------- */
 async function boot(){
   if(inAppBrowser()){gateUnsupported();return;}
   let appMod,authMod,fsMod;
