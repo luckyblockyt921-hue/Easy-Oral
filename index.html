@@ -7,7 +7,7 @@
 <style>
   :root{
     --paper:#f4eee1;--card:#fffdf6;--ink:#211d18;--ink-soft:#5b5348;
-    --oxblood:#7a2e2a;--oxblood-dk:#5f221f;--gold:#a9812f;--green:#3f6b4a;
+    --oxblood:#7a2e2a;--oxblood-dk:#5f221f;--gold:#a9812f;--green:#3f6b4a;--amber:#9a6b1e;
     --line:rgba(33,29,24,.14);--line-strong:rgba(33,29,24,.28);
     --shadow:0 1px 2px rgba(33,29,24,.06),0 8px 24px rgba(33,29,24,.08);
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
@@ -29,8 +29,10 @@
   .btn{border:1px solid transparent;border-radius:9px;padding:9px 15px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:.15s;white-space:nowrap}
   .btn-primary{background:var(--oxblood);color:#fff}.btn-primary:hover{background:var(--oxblood-dk)}
   .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}.btn-ghost:hover{background:rgba(33,29,24,.05)}
+  .btn-danger{background:#fff;color:var(--oxblood);border-color:var(--oxblood)}.btn-danger:hover{background:rgba(122,46,42,.08)}
   .btn-sm{padding:6px 11px;font-size:13px;border-radius:8px}.btn:disabled{opacity:.5;cursor:not-allowed}
   .userchip{display:flex;align-items:center;gap:9px;padding:5px 11px 5px 6px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);font-size:13px;font-weight:600}
+  .badge-admin{background:var(--gold);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;letter-spacing:.5px;text-transform:uppercase}
   .avatar{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;flex:none;object-fit:cover;overflow:hidden}
   main{max-width:1080px;margin:0 auto;padding:26px 22px}
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:26px;flex-wrap:wrap}
@@ -41,52 +43,59 @@
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:var(--shadow)}
   h2.section{font-family:var(--serif);font-size:26px;margin:0 0 6px}
-  p.lead{color:var(--ink-soft);margin:0 0 20px;font-size:15px;line-height:1.5;max-width:62ch}
+  p.lead{color:var(--ink-soft);margin:0 0 20px;font-size:15px;line-height:1.5;max-width:64ch}
   label.fld{display:block;font-size:13px;font-weight:700;letter-spacing:.3px;margin-bottom:6px;color:var(--ink)}
-  input[type=text],input[type=email],textarea,select{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);background:#fff;border:1px solid var(--line-strong);border-radius:9px;padding:11px 13px}
-  textarea{resize:vertical;min-height:80px;line-height:1.5}
-  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--oxblood);box-shadow:0 0 0 3px rgba(122,46,42,.12)}
+  input[type=text],input[type=email],textarea{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);background:#fff;border:1px solid var(--line-strong);border-radius:9px;padding:11px 13px}
+  textarea{resize:vertical;min-height:70px;line-height:1.5}
+  input:focus,textarea:focus{outline:none;border-color:var(--oxblood);box-shadow:0 0 0 3px rgba(122,46,42,.12)}
   .hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.45}
-  .drop{border:2px dashed var(--line-strong);border-radius:14px;padding:34px 20px;text-align:center;background:rgba(255,255,255,.5);transition:.15s;cursor:pointer}
-  .drop:hover,.drop.hot{border-color:var(--oxblood);background:rgba(122,46,42,.04)}
-  .drop .ic{font-size:34px}.drop b{font-family:var(--serif);font-size:18px;display:block;margin:8px 0 3px}
-  .theme-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-  .chip{background:rgba(169,129,47,.14);color:#6d5118;border:1px solid rgba(169,129,47,.35);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600}
-  .suggested{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
-  .sg{border:1px solid var(--line);border-radius:11px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:8px}
-  .sg h4{font-family:var(--serif);margin:0;font-size:16.5px;line-height:1.25}
-  .sg p{margin:0;font-size:13px;color:var(--ink-soft);line-height:1.45;flex:1}
   .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
   .topic{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:11px;position:relative;overflow:hidden}
   .topic::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--oxblood)}
   .topic h3{font-family:var(--serif);font-size:19px;margin:0;line-height:1.25;padding-left:6px}
-  .topic .body{font-size:14px;color:var(--ink-soft);line-height:1.55;padding-left:6px}
+  .topic .body{font-size:14px;color:var(--ink-soft);line-height:1.55;padding-left:6px;white-space:pre-wrap}
   .topic .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-left:6px;border-top:1px solid var(--line);padding-top:11px;margin-top:2px}
-  .owner{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+  .owner{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;min-width:0}
+  .owner .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .owner .when{color:var(--ink-soft);font-weight:400;font-size:12px}
-  .trash{border:none;background:none;color:var(--ink-soft);font-size:16px;padding:2px 6px;border-radius:6px}
-  .trash:hover{color:var(--oxblood);background:rgba(122,46,42,.08)}
+  .post-actions{display:flex;gap:4px;flex:none}
+  .iconbtn{border:none;background:none;color:var(--ink-soft);font-size:15px;padding:3px 6px;border-radius:6px}
+  .iconbtn:hover{color:var(--oxblood);background:rgba(122,46,42,.08)}
   .empty{text-align:center;padding:50px 20px;color:var(--ink-soft)}
   .empty .ic{font-size:40px;opacity:.6}.empty b{font-family:var(--serif);font-size:20px;color:var(--ink);display:block;margin:10px 0 4px}
-  .verdict{border-radius:12px;padding:16px 18px;margin-top:18px;font-size:14.5px;line-height:1.5;display:none}
+  .verdict{border-radius:12px;padding:16px 18px;margin-top:18px;font-size:14.5px;line-height:1.55;display:none}
   .verdict.show{display:block;animation:fade .25s}
-  .verdict.taken{background:rgba(122,46,42,.08);border:1px solid rgba(122,46,42,.4);color:var(--oxblood-dk)}
+  .verdict.warn{background:rgba(154,107,30,.1);border:1px solid rgba(154,107,30,.4);color:#6d4a12}
   .verdict.ok{background:rgba(63,107,74,.1);border:1px solid rgba(63,107,74,.4);color:#2c5236}
-  .verdict b{display:block;font-family:var(--serif);font-size:17px;margin-bottom:4px}
-  #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw}
+  .verdict.err{background:rgba(122,46,42,.08);border:1px solid rgba(122,46,42,.4);color:var(--oxblood-dk)}
+  .verdict b.t{display:block;font-family:var(--serif);font-size:17px;margin-bottom:5px}
+  .verdict .acts{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+  .admin-sec{margin-bottom:22px}
+  .admin-sec h3{font-family:var(--serif);font-size:19px;margin:0 0 4px}
+  .admin-sec .desc{font-size:13px;color:var(--ink-soft);margin:0 0 12px;line-height:1.5}
+  .rowline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;margin-bottom:8px;font-size:14px}
+  .rowline .who{display:flex;align-items:center;gap:8px;min-width:0}
+  .rowline .who span.e{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .addrow{display:flex;gap:8px;margin-top:6px}
+  .addrow input{flex:1}
+  #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;text-align:center}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
-  .btn-ghost .spinner{border-color:var(--line-strong);border-top-color:var(--oxblood)}
+  .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .gate{max-width:640px;margin:60px auto;text-align:center;padding:0 22px}
+  .gate{max-width:620px;margin:50px auto;text-align:center;padding:0 22px}
   .gate .seal{width:64px;height:64px;font-size:30px;margin:0 auto 22px}
-  .gate h2{font-family:var(--serif);font-size:30px;margin:0 0 12px}
-  .gate p{color:var(--ink-soft);font-size:15.5px;line-height:1.6;margin:0 auto 26px;max-width:52ch}
+  .gate h2{font-family:var(--serif);font-size:29px;margin:0 0 12px}
+  .gate p{color:var(--ink-soft);font-size:15.5px;line-height:1.6;margin:0 auto 20px;max-width:52ch}
+  .gate .card{text-align:left;margin-top:22px}
+  .gate ol{margin:0;padding-left:20px;line-height:1.9;font-size:15px}
   .gbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line-strong);background:#fff;color:var(--ink);padding:12px 22px;border-radius:10px;font-weight:600;font-size:15px}
   .gbtn:hover{background:#f6f3ec}
   .gmark{font-weight:700;font-size:17px}.gmark .b{color:#4285F4}.gmark .r{color:#EA4335}.gmark .y{color:#FBBC05}.gmark .g{color:#34A853}
+  .linkbox{display:flex;gap:8px;margin-top:8px}
+  .linkbox input{flex:1;font-size:13px;background:#fff;color:var(--ink-soft)}
+  code{background:rgba(33,29,24,.07);padding:2px 6px;border-radius:5px;font-size:13px}
   @media(max-width:560px){.brand small{display:none}main{padding:20px 14px}.bar{padding:12px 14px}}
-  @media print{header,.tabs,.drop,.verdict{display:none!important}.view{display:block!important}body{background:#fff}}
+  @media print{header,.tabs,.verdict{display:none!important}.view{display:block!important}body{background:#fff}}
 </style>
 </head>
 <body>
@@ -105,52 +114,45 @@
 
 <main id="app" style="display:none">
   <div class="tabs">
-    <button class="tab active" data-view="material">&#128218; The Material</button>
-    <button class="tab" data-view="claim">&#9997;&#65039; Claim a Topic</button>
-    <button class="tab" data-view="board">&#128204; The Board <span class="count" id="boardCount">0</span></button>
+    <button class="tab active" data-view="board">&#128204; The Board <span class="count" id="boardCount">0</span></button>
+    <button class="tab" data-view="post">&#9997;&#65039; Post a Topic</button>
+    <button class="tab" data-view="admin" id="adminTab" style="display:none">&#128273; Admin</button>
   </div>
 
-  <section class="view active" id="view-material">
-    <div class="card">
-      <h2 class="section">The material this oral is based on</h2>
-      <p class="lead">Upload the PDF your teacher gave you. The AI reads it and pulls out the main themes and a set of good oral topics. This is shared with the whole class.</p>
-      <div class="drop" id="drop">
-        <div class="ic">&#128196;</div>
-        <b>Drop a PDF here or click to choose</b>
-        <div class="hint">Your class handout, chapter, or reading &middot; PDF only</div>
-        <input type="file" id="pdfInput" accept=".pdf,application/pdf" hidden />
-      </div>
-      <div id="fileRow" style="display:none;margin-top:16px;align-items:center;gap:12px"></div>
-    </div>
-    <div id="materialResult" style="margin-top:20px"></div>
+  <section class="view active" id="view-board">
+    <h2 class="section" style="margin-bottom:4px">Claimed topics</h2>
+    <p class="lead">Everyone's oral topics for this class. Grab one on the "Post a Topic" tab.</p>
+    <div id="boardWrap"></div>
   </section>
 
-  <section class="view" id="view-claim">
+  <section class="view" id="view-post">
     <div class="card">
-      <h2 class="section">Claim your oral topic</h2>
-      <p class="lead">Say what you want to present on. The AI checks it against everything the class has already claimed. If it's the same or similar, it tells you it's taken; if you're clear, it writes your summary and adds your card.</p>
-      <div class="row" style="margin-bottom:16px">
+      <h2 class="section">Post your oral topic</h2>
+      <p class="lead">Add what you'll present on. We'll check if it overlaps someone else's and warn you &mdash; but you can always post anyway.</p>
+      <div style="margin-bottom:16px">
         <label class="fld" for="topicTitle">Your topic</label>
         <input type="text" id="topicTitle" placeholder="e.g. The causes of the French Revolution" maxlength="120" />
       </div>
-      <div class="row" style="margin-bottom:18px">
-        <label class="fld" for="topicNotes">Anything specific you'll focus on (optional)</label>
-        <textarea id="topicNotes" placeholder="e.g. I want to focus on the financial crisis and the Estates-General."></textarea>
+      <div style="margin-bottom:18px">
+        <label class="fld" for="topicNotes">What you'll focus on (optional)</label>
+        <textarea id="topicNotes" placeholder="e.g. The financial crisis and the role of the Estates-General." maxlength="400"></textarea>
       </div>
-      <button class="btn btn-primary" id="submitTopic">Check &amp; claim topic</button>
+      <button class="btn btn-primary" id="submitTopic">Post topic</button>
       <div class="verdict" id="verdict"></div>
     </div>
   </section>
 
-  <section class="view" id="view-board">
-    <h2 class="section" style="margin-bottom:16px">Claimed topics</h2>
-    <div id="boardWrap"></div>
+  <section class="view" id="view-admin">
+    <h2 class="section" style="margin-bottom:4px">Admin</h2>
+    <p class="lead" id="adminIntro">Moderator tools.</p>
+    <div id="adminBody"></div>
   </section>
 </main>
 
 <div id="toast"></div>
 
 <script type="module">
+/* ===================== SETTINGS ===================== */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDD-4jhLTQfdBmLYcPgewFbZuLfgYLZU3g",
   authDomain: "easy-oral.firebaseapp.com",
@@ -159,62 +161,124 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "310063147908",
   appId: "1:310063147908:web:b339d0e3443b01b3f70bd1"
 };
-
 const GEMINI_KEY = "AQ.Ab8RN6JBEOk4O0afYAUXsLAXnKV8yWZ1hm0MMNjAs8KaCZCneA";
-// The app tries these in order until one works, so it never depends on a single model.
-const GEMINI_MODELS = ["gemini-flash-latest","gemini-2.5-flash","gemini-2.5-pro","gemini-2.5-flash-lite","gemini-3-flash-preview"];
+const GEMINI_MODELS = ["gemini-flash-latest","gemini-2.5-flash","gemini-2.5-flash-lite","gemini-2.5-pro","gemini-3-flash-preview"];
+const OWNER_EMAIL = "taehyeonk921@gmail.com"; // permanent owner: can grant/remove admins
+/* =================================================== */
 
 const FB_VER='https://www.gstatic.com/firebasejs/10.12.0';
-let auth,db,me=null,topicsCache=[],materialCache=null;
-let FB={};
+let auth,db,me=null,FB={};
+let topicsCache=[], roles={admins:[],banned:[]}, rolesLoaded=false;
 
 const $=id=>document.getElementById(id);
+const lc=s=>(s||'').trim().toLowerCase();
 function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function initials(n){return(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 function timeAgo(ts){if(!ts)return'just now';const s=(Date.now()-ts)/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
-let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
-
-function fileToBase64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
-function parseJSON(t){if(!t)return null;try{return JSON.parse(t);}catch(e){}const m=t.match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0]);}catch(_){}}return null;}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3600);}
 
-async function gemini(parts){
-  const body={contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',temperature:0.35}};
-  let lastMsg="the AI is unavailable right now";
+const isOwner =()=> me && lc(me.email)===lc(OWNER_EMAIL);
+const isAdmin =()=> isOwner() || (me && roles.admins.map(lc).includes(lc(me.email)));
+const isBanned=(email)=> roles.banned.map(lc).includes(lc(email));
+
+function inAppBrowser(){
+  const ua=navigator.userAgent||'';
+  return /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|Snapchat|MicroMessenger|TikTok|Twitter|Pinterest|; wv\)/i.test(ua);
+}
+
+function parseJSON(t){if(!t)return null;try{return JSON.parse(t);}catch(e){}const m=t.match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0]);}catch(_){}}return null;}
+async function gemini(prompt){
+  const body={contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.2}};
   for(const model of GEMINI_MODELS){
-    for(let attempt=0;attempt<3;attempt++){
+    for(let a=0;a<2;a++){
       let r;
-      try{
-        r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify(body)});
-      }catch(e){throw new Error("Couldn't reach the AI. Check your internet connection.");}
+      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},body:JSON.stringify(body)});}
+      catch(e){throw new Error('network');}
       if(r.ok){const d=await r.json();return(d?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');}
-      const t=await r.text();
-      if(r.status===400&&/API key/i.test(t)){throw new Error('The Gemini API key was rejected.');}
-      if(r.status===404||r.status===403){lastMsg="model unavailable";break;}
-      if(r.status===503||r.status===500||r.status===429){lastMsg="the AI is busy (error "+r.status+")";await sleep(2000*(attempt+1));continue;}
-      lastMsg='AI error '+r.status;break;
+      if(r.status===503||r.status===500||r.status===429){await sleep(1200*(a+1));continue;}
+      break;
     }
   }
-  throw new Error(lastMsg.charAt(0).toUpperCase()+lastMsg.slice(1)+". Please wait a moment and try again.");
+  throw new Error('unavailable');
+}
+
+function localMatch(title){
+  const toks=s=>new Set(lc(s).replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2));
+  const A=toks(title); if(! A.size)return null;
+  let best=null,bestScore=0;
+  for(const t of topicsCache){
+    const B=toks(t.title);if(!B.size)continue;
+    let i=0;A.forEach(x=>{if(B.has(x))i++;});
+    const score=i/new Set([...A,...B]).size;
+    if(score>bestScore){bestScore=score;best=t;}
+  }
+  return bestScore>=0.45?{matched:best,reason:"It shares a lot of the same words as an existing topic."}:null;
+}
+async function aiMatch(title,notes){
+  if(!topicsCache.length)return null;
+  const prompt=`You check if a new history oral-exam topic overlaps with existing ones. Judge by MEANING, not exact words.
+EXISTING TOPICS: ${JSON.stringify(topicsCache.map(t=>t.title))}
+NEW TOPIC: "${title}". Notes: "${notes||'none'}".
+Return ONLY JSON: {"overlap": true or false, "matchedTitle": "the existing topic it overlaps with, or null", "reason": "one short friendly sentence explaining the overlap"}`;
+  const data=parseJSON(await gemini(prompt));
+  if(data&&data.overlap&&data.matchedTitle){
+    const matched=topicsCache.find(t=>t.title===data.matchedTitle)||topicsCache.find(t=>lc(t.title)===lc(data.matchedTitle));
+    if(matched)return{matched,reason:data.reason||"It looks like it covers the same ground."};
+  }
+  return null;
 }
 
 function showGate(html){$('gate').innerHTML=html;$('gate').style.display='block';$('app').style.display='none';}
 function hideGate(){$('gate').style.display='none';$('app').style.display='block';}
-function gatePreview(){showGate(`<div class="gate"><div class="seal">O</div><h2>Loading failed</h2><p>Couldn't load the sign-in libraries. Open the live web address (not a preview window).</p></div>`);}
+
+function gateUnsupported(){
+  const url=location.href.split('#')[0];
+  showGate(`<div class="gate"><div class="seal">O</div>
+    <h2>Please open this in Safari or Chrome</h2>
+    <p>You're viewing this inside an app's built-in browser (like WhatsApp or Instagram). Google sign-in <b>won't work here</b>. Here's what to do:</p>
+    <div class="card">
+      <ol>
+        <li>Tap the <b>&#8942; / &#8230; menu</b> in the corner of this screen.</li>
+        <li>Choose <b>"Open in browser"</b>, <b>"Open in Safari"</b>, or <b>"Open in Chrome"</b>.</li>
+        <li>Sign in there &mdash; it'll work right away.</li>
+      </ol>
+      <div class="hint" style="margin-top:12px">Or copy this link and paste it into Safari/Chrome yourself:</div>
+      <div class="linkbox"><input type="text" id="copyUrl" value="${esc(url)}" readonly><button class="btn btn-primary btn-sm" id="copyBtn">Copy</button></div>
+    </div></div>`);
+  $('copyBtn').onclick=()=>{const i=$('copyUrl');i.select();try{document.execCommand('copy');}catch(e){}navigator.clipboard&&navigator.clipboard.writeText(i.value);toast('Link copied — paste it into Safari or Chrome');};
+}
 function gateSignIn(){
-  showGate(`<div class="gate"><div class="seal">O</div><h2>Sign in to see the board</h2><p>Use your school Google account so classmates can see whose topic is whose. Everyone signs into the same shared board.</p><button class="gbtn" id="googleSignIn"><span class="gmark"><span class="b">G</span><span class="r">o</span><span class="y">o</span><span class="b">g</span><span class="g">l</span><span class="r">e</span></span> Sign in with Google</button></div>`);
+  showGate(`<div class="gate"><div class="seal">O</div>
+    <h2>Sign in to see the board</h2>
+    <p>Use your Google account so classmates can see whose topic is whose. Everyone shares one board.</p>
+    <button class="gbtn" id="googleSignIn"><span class="gmark"><span class="b">G</span><span class="r">o</span><span class="y">o</span><span class="b">g</span><span class="g">l</span><span class="r">e</span></span> Sign in with Google</button>
+    <p class="hint" style="margin-top:16px">Nothing happens when you tap it? Your browser may be blocking pop-ups &mdash; allow pop-ups for this site, or try Safari/Chrome.</p></div>`);
   $('googleSignIn').onclick=async()=>{
+    const b=$('googleSignIn');b.innerHTML='<span class="spinner" style="border-color:var(--line-strong);border-top-color:var(--oxblood)"></span> Opening Google…';
     try{await FB.signInWithPopup(auth,new FB.GoogleAuthProvider());}
-    catch(e){toast(e.code==='auth/unauthorized-domain'?'This web address is not authorized in Firebase yet.':'Sign-in failed. Try again.');}
+    catch(e){
+      let msg='Sign-in didn’t finish. Tap the button and try again.';
+      if(e.code==='auth/popup-blocked')msg='Your browser blocked the pop-up. Allow pop-ups for this site, then tap again.';
+      else if(e.code==='auth/unauthorized-domain')msg='This web address isn’t authorized in Firebase yet (tell the site owner).';
+      else if(e.code==='auth/popup-closed-by-user')msg='The Google window closed before finishing. Tap to try again.';
+      toast(msg);gateSignIn();
+    }
   };
+}
+function gateBanned(){
+  showGate(`<div class="gate"><div class="seal" style="border-color:var(--oxblood)">&#9940;</div>
+    <h2>Your access has been removed</h2>
+    <p>An admin has banned this account (<b>${esc(me.email||'')}</b>) from the board. If you think this is a mistake, message the class admin to be unbanned.</p>
+    <button class="btn btn-ghost" id="boSignOut">Sign out</button></div>`);
+  $('boSignOut').onclick=()=>FB.signOut(auth);
 }
 
 function renderAuth(){
   const slot=$('authSlot');
   if(me){
     const av=me.photoURL?`<img class="avatar" src="${esc(me.photoURL)}" alt="">`:`<span class="avatar" style="background:var(--oxblood)">${esc(initials(me.displayName))}</span>`;
-    slot.innerHTML=`<div class="userchip">${av}${esc((me.displayName||'You').split(' ')[0])}<button class="btn btn-ghost btn-sm" id="signOut" style="margin-left:4px;padding:3px 8px">Sign out</button></div>`;
+    slot.innerHTML=`<div class="userchip">${av}${esc((me.displayName||'You').split(' ')[0])}${isAdmin()?'<span class="badge-admin">'+(isOwner()?'owner':'admin')+'</span>':''}<button class="btn btn-ghost btn-sm" id="signOut" style="margin-left:4px;padding:3px 8px">Sign out</button></div>`;
     $('signOut').onclick=()=>FB.signOut(auth);
   }else slot.innerHTML='';
 }
@@ -222,99 +286,144 @@ function renderAuth(){
 function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));}
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view));
 
-function wireDrop(){
-  const drop=$('drop'),pdfInput=$('pdfInput');
-  drop.onclick=()=>pdfInput.click();
-  drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot');};
-  drop.ondragleave=()=>drop.classList.remove('hot');
-  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');if(e.dataTransfer.files[0])handlePDF(e.dataTransfer.files[0]);};
-  pdfInput.onchange=()=>{if(pdfInput.files[0])handlePDF(pdfInput.files[0]);};
-}
-async function handlePDF(file){
-  if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf')){toast('Please choose a PDF file');return;}
-  const row=$('fileRow');row.style.display='flex';
-  row.innerHTML=`<span style="font-size:22px">&#128196;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint">Reading&hellip; this can take up to a minute</div></div><span class="spinner" style="border-color:var(--line-strong);border-top-color:var(--oxblood)"></span>`;
-  try{
-    const b64=await fileToBase64(file);
-    const prompt=`You are helping a history class prepare for oral exams. Analyze the attached source document thoroughly. Return ONLY JSON: {"summary":"3-4 sentence plain-English overview","keyThemes":["5 to 8 short theme phrases"],"suggestedTopics":[{"title":"a specific distinct oral topic","angle":"one short sentence on why it's a good oral topic"}]}. Give 6 to 10 distinct suggested topics.`;
-    const raw=await gemini([{text:prompt},{inline_data:{mime_type:'application/pdf',data:b64}}]);
-    const data=parseJSON(raw);
-    if(!data||!data.summary)throw new Error('Could not read that PDF. Try a clearer, text-based PDF.');
-    await FB.setDoc(FB.doc(db,'material','current'),{fileName:file.name,summary:data.summary,keyThemes:data.keyThemes||[],suggestedTopics:data.suggestedTopics||[],updatedBy:me.displayName||'',at:FB.serverTimestamp()});
-    row.innerHTML=`<span style="font-size:22px">&#9989;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint">Analyzed and shared with the class</div></div>`;
-    toast('Material analyzed & shared');
-  }catch(e){row.innerHTML=`<span style="font-size:22px">&#9888;&#65039;</span><div style="flex:1"><b style="font-family:var(--serif)">${esc(file.name)}</b><div class="hint" style="color:var(--oxblood)">${esc(e.message)}</div></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('pdfInput').click()">Try again</button>`;}
-}
-function renderMaterial(){
-  const m=materialCache,wrap=$('materialResult');
-  if(!m){wrap.innerHTML='';return;}
-  wrap.innerHTML=`<div class="card"><h2 class="section" style="font-size:22px">What this material covers</h2>
-    <p style="font-size:15px;line-height:1.6;color:var(--ink-soft);margin:0 0 20px">${esc(m.summary)}</p>
-    <label class="fld">Key themes</label><div class="theme-chips">${(m.keyThemes||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')||'<span class="hint">None found</span>'}</div>
-    <label class="fld" style="margin-top:22px">Good topics to claim</label>
-    <div class="suggested">${(m.suggestedTopics||[]).map(s=>`<div class="sg"><h4>${esc(s.title)}</h4><p>${esc(s.angle||'')}</p><button class="btn btn-ghost btn-sm claimSuggest" data-t="${esc(s.title)}">Claim this &rarr;</button></div>`).join('')}</div></div>`;
-  wrap.querySelectorAll('.claimSuggest').forEach(b=>b.onclick=()=>{switchView('claim');$('topicTitle').value=b.dataset.t;$('verdict').className='verdict';$('topicTitle').focus();});
-}
-
-$('submitTopic').onclick=submitTopic;
-async function submitTopic(){
-  const title=$('topicTitle').value.trim(),notes=$('topicNotes').value.trim(),verdict=$('verdict');
-  if(!title){toast('Type your topic first');return;}
-  const btn=$('submitTopic');verdict.className='verdict';btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Checking&hellip;';
-  try{
-    const prompt=`You manage oral-exam topic sign-ups for a history class. Two students must not present the same or a substantially overlapping topic.
-CLASS MATERIAL SUMMARY: ${materialCache?materialCache.summary:'(none uploaded)'}
-ALREADY CLAIMED TOPICS: ${JSON.stringify(topicsCache.map(t=>t.title))}
-A student wants to claim: "${title}". Their notes: "${notes||'none'}".
-Judge overlap by MEANING, not exact wording. Return ONLY JSON: {"duplicate":true or false,"matchedTitle":"the claimed topic it clashes with, or null","reason":"one friendly sentence for the student","cleanTitle":"a tidy version of their topic title","summary":"if NOT duplicate: 3-4 sentence summary grounded in the material; else empty"}`;
-    const result=parseJSON(await gemini([{text:prompt}]))||{};
-    if(result.duplicate){
-      const owner=topicsCache.find(t=>t.title===result.matchedTitle)||topicsCache.find(t=>(t.title||'').toLowerCase()===(result.matchedTitle||'').toLowerCase());
-      verdict.className='verdict taken show';
-      verdict.innerHTML=`<b>&#128683; That topic is already taken</b>${esc(result.reason||'Someone already claimed a very similar topic.')}${owner?` <br><br>Claimed as <b>"${esc(owner.title)}"</b> by <b>${esc(owner.ownerName)}</b>. Try a different angle or subject.`:''}`;
-    }else{
-      await FB.addDoc(FB.collection(db,'topics'),{title:(result.cleanTitle||title).slice(0,140),summary:result.summary||notes||'',ownerName:me.displayName||'',ownerEmail:me.email||'',ownerPhoto:me.photoURL||'',ownerUid:me.uid,at:FB.serverTimestamp()});
-      verdict.className='verdict ok show';
-      verdict.innerHTML=`<b>&#9989; Topic claimed &mdash; it's yours!</b>"${esc(result.cleanTitle||title)}" is now on the shared board under your name.${result.summary?`<br><br><b style="font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink-soft)">YOUR SUMMARY</b><br>${esc(result.summary)}`:''}`;
-      $('topicTitle').value='';$('topicNotes').value='';toast('Topic added to the board');
+let pending=null;
+$('submitTopic').onclick=()=>doPost(false);
+async function doPost(force){
+  const title=$('topicTitle').value.trim(), notes=$('topicNotes').value.trim(), verdict=$('verdict'), btn=$('submitTopic');
+  if(!title){toast('Type your topic first, then tap Post.');$('topicTitle').focus();return;}
+  if(!force){
+    verdict.className='verdict';btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Checking for overlaps…';
+    let warn=null;
+    try{warn=await aiMatch(title,notes);}
+    catch(e){warn=localMatch(title);}
+    btn.disabled=false;btn.textContent='Post topic';
+    if(warn){
+      pending={title,notes};
+      verdict.className='verdict warn show';
+      verdict.innerHTML=`<b class="t">&#9888;&#65039; This may overlap another topic</b>${esc(warn.reason)}<br><br>Similar to <b>"${esc(warn.matched.title)}"</b> by <b>${esc(warn.matched.ownerName)}</b>.<br>You can still post it (that's allowed) &mdash; or tweak yours to be different.<div class="acts"><button class="btn btn-primary btn-sm" id="postAnyway">Post it anyway</button><button class="btn btn-ghost btn-sm" id="editInstead">Let me change it</button></div>`;
+      $('postAnyway').onclick=()=>doPost(true);
+      $('editInstead').onclick=()=>{verdict.className='verdict';$('topicTitle').focus();};
+      return;
     }
-  }catch(e){verdict.className='verdict taken show';verdict.innerHTML=`<b>&#9888;&#65039; Couldn't check right now</b>${esc(e.message)}`;}
-  finally{btn.disabled=false;btn.textContent='Check & claim topic';}
+  }
+  const btn2=$('submitTopic');btn2.disabled=true;btn2.innerHTML='<span class="spinner"></span> Posting…';
+  try{
+    await FB.addDoc(FB.collection(db,'topics'),{title:(pending?pending.title:title).slice(0,140),notes:(pending?pending.notes:notes).slice(0,400),ownerName:me.displayName||'',ownerEmail:me.email||'',ownerPhoto:me.photoURL||'',ownerUid:me.uid,at:FB.serverTimestamp()});
+    pending=null;
+    $('topicTitle').value='';$('topicNotes').value='';
+    verdict.className='verdict ok show';verdict.innerHTML=`<b class="t">&#9989; Posted!</b>Your topic is on the board. Check the "The Board" tab to see it.`;
+    toast('Your topic is on the board');
+    switchView('board');
+  }catch(e){
+    verdict.className='verdict err show';verdict.innerHTML=`<b class="t">&#9888;&#65039; Couldn't post just now</b>Check your internet connection and tap "Post topic" again. If it keeps failing, refresh the page.`;
+  }finally{const b=$('submitTopic');b.disabled=false;b.textContent='Post topic';}
 }
 
 function renderBoard(){
   const topics=topicsCache.slice().sort((a,b)=>(b.atMs||0)-(a.atMs||0));
   $('boardCount').textContent=topics.length;
   const wrap=$('boardWrap');
-  if(!topics.length){wrap.innerHTML=`<div class="empty"><div class="ic">&#128204;</div><b>No topics claimed yet</b><div>Head to "Claim a Topic" to be the first.</div></div>`;return;}
+  if(!topics.length){wrap.innerHTML=`<div class="empty"><div class="ic">&#128204;</div><b>No topics yet</b><div>Be the first &mdash; tap "Post a Topic" above.</div></div>`;return;}
   wrap.innerHTML=`<div class="board">${topics.map(t=>{
     const av=t.ownerPhoto?`<img class="avatar" style="width:22px;height:22px" src="${esc(t.ownerPhoto)}" alt="">`:`<span class="avatar" style="width:22px;height:22px;font-size:10px;background:var(--oxblood)">${esc(initials(t.ownerName))}</span>`;
-    return `<div class="topic"><h3>${esc(t.title)}</h3><div class="body">${esc(t.summary)||'<i style="opacity:.6">No summary</i>'}</div>
-      <div class="foot"><span class="owner">${av}${esc(t.ownerName)}<span class="when">&middot; ${timeAgo(t.atMs)}</span></span>
-      ${me&&me.uid===t.ownerUid?`<button class="trash" data-id="${t.id}" title="Remove your topic">&#128465;&#65039;</button>`:''}</div></div>`;
+    const mine=me&&me.uid===t.ownerUid;
+    let actions='';
+    if(mine||isAdmin())actions+=`<button class="iconbtn del" data-id="${t.id}" title="Delete this post">&#128465;&#65039;</button>`;
+    if(isAdmin()&&!mine&&lc(t.ownerEmail)!==lc(OWNER_EMAIL))actions+=`<button class="iconbtn ban" data-email="${esc(t.ownerEmail)}" data-name="${esc(t.ownerName)}" title="Ban this person">&#128683;</button>`;
+    return `<div class="topic"><h3>${esc(t.title)}</h3>${t.notes?`<div class="body">${esc(t.notes)}</div>`:''}
+      <div class="foot"><span class="owner">${av}<span class="nm">${esc(t.ownerName)}</span><span class="when">&middot; ${timeAgo(t.atMs)}</span></span>
+      <span class="post-actions">${actions}</span></div></div>`;
   }).join('')}</div>`;
-  wrap.querySelectorAll('.trash').forEach(b=>b.onclick=async()=>{await FB.deleteDoc(FB.doc(db,'topics',b.dataset.id));toast('Topic removed');});
+  wrap.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{if(confirm('Delete this post?')){try{await FB.deleteDoc(FB.doc(db,'topics',b.dataset.id));toast('Post deleted');}catch(e){toast('Couldn’t delete — try again.');}}});
+  wrap.querySelectorAll('.ban').forEach(b=>b.onclick=()=>banEmail(b.dataset.email,b.dataset.name));
+}
+
+async function saveRoles(part){try{await FB.setDoc(FB.doc(db,'config','roles'),part,{merge:true});}catch(e){toast('Couldn’t save — check your connection and retry.');throw e;}}
+async function banEmail(email,name){
+  if(!email){toast('That post has no email attached.');return;}
+  if(lc(email)===lc(OWNER_EMAIL)){toast('You can’t ban the owner.');return;}
+  if(!confirm('Ban '+(name||email)+'? They won’t be able to use the board until unbanned.'))return;
+  await saveRoles({banned:FB.arrayUnion(lc(email))});
+  toast((name||email)+' has been banned');
+}
+async function unbanEmail(email){await saveRoles({banned:FB.arrayRemove(lc(email))});toast('Unbanned '+email);}
+async function grantAdmin(email){
+  email=lc(email);
+  if(!email||!email.includes('@')){toast('Enter a full email address (like name@gmail.com).');return;}
+  if(email===lc(OWNER_EMAIL)){toast('That account is already the owner.');return;}
+  await saveRoles({admins:FB.arrayUnion(email)});toast(email+' is now an admin');
+}
+async function removeAdmin(email){await saveRoles({admins:FB.arrayRemove(lc(email))});toast('Removed admin '+email);}
+async function resetBoard(){
+  if(!confirm('Reset the board? This permanently deletes ALL posts for everyone. Use this after a class.'))return;
+  toast('Resetting the board…');
+  try{
+    const snap=await FB.getDocs(FB.collection(db,'topics'));
+    await Promise.all(snap.docs.map(d=>FB.deleteDoc(FB.doc(db,'topics',d.id))));
+    toast('Board reset — all posts cleared');
+  }catch(e){toast('Couldn’t fully reset — check connection and try again.');}
+}
+
+function renderAdmin(){
+  const admin=isAdmin();
+  $('adminTab').style.display=admin?'':'none';
+  if(!admin){$('adminBody').innerHTML='';return;}
+  $('adminIntro').textContent=isOwner()?'You’re the owner — you can manage admins, moderate posts, ban people, and reset the board.':'You’re an admin — you can moderate posts, ban people, and reset the board.';
+  let html='';
+  html+=`<div class="admin-sec card"><h3>Reset the board</h3><p class="desc">Clears every post so the next class starts fresh. This can’t be undone.</p><button class="btn btn-danger" id="resetBtn">&#128260; Reset board (delete all posts)</button></div>`;
+  html+=`<div class="admin-sec card"><h3>Banned accounts</h3><p class="desc">Banned people can’t open the board. You can also ban someone straight from their post (the &#128683; icon).</p>`;
+  html+= roles.banned.length?roles.banned.map(e=>`<div class="rowline"><span class="who">&#9940; <span class="e">${esc(e)}</span></span><button class="btn btn-ghost btn-sm unban" data-e="${esc(e)}">Unban</button></div>`).join(''):`<p class="hint">No one is banned.</p>`;
+  html+=`<div class="addrow"><input type="email" id="banInput" placeholder="email to ban (name@gmail.com)"><button class="btn btn-danger btn-sm" id="banBtn">Ban</button></div></div>`;
+  if(isOwner()){
+    html+=`<div class="admin-sec card"><h3>Manage admins</h3><p class="desc">Admins can moderate posts, ban people, and reset the board — but only you (the owner) can add or remove admins.</p>`;
+    html+=`<div class="rowline"><span class="who">&#128081; <span class="e">${esc(OWNER_EMAIL)}</span></span><span class="badge-admin">owner</span></div>`;
+    html+= roles.admins.length?roles.admins.map(e=>`<div class="rowline"><span class="who">&#128273; <span class="e">${esc(e)}</span></span><button class="btn btn-ghost btn-sm rmadmin" data-e="${esc(e)}">Remove</button></div>`).join(''):`<p class="hint">No other admins yet.</p>`;
+    html+=`<div class="addrow"><input type="email" id="adminInput" placeholder="email to make admin"><button class="btn btn-primary btn-sm" id="adminBtn">Grant admin</button></div></div>`;
+  }
+  $('adminBody').innerHTML=html;
+  $('resetBtn').onclick=resetBoard;
+  $('banBtn').onclick=()=>{const v=$('banInput').value.trim();if(!v||!v.includes('@')){toast('Enter a full email address.');return;}banEmail(v,v);$('banInput').value='';};
+  $('adminBody').querySelectorAll('.unban').forEach(b=>b.onclick=()=>unbanEmail(b.dataset.e));
+  if(isOwner()){
+    $('adminBtn').onclick=()=>{const v=$('adminInput').value.trim();grantAdmin(v);$('adminInput').value='';};
+    $('adminBody').querySelectorAll('.rmadmin').forEach(b=>b.onclick=()=>removeAdmin(b.dataset.e));
+  }
+}
+
+function applyAccess(){
+  renderAuth();
+  if(!me){gateSignIn();return;}
+  if(!rolesLoaded)return;
+  if(isBanned(me.email)){gateBanned();return;}
+  hideGate();
+  renderAdmin();renderBoard();
 }
 
 async function boot(){
+  if(inAppBrowser()){gateUnsupported();return;}
   let appMod,authMod,fsMod;
   try{
     [appMod,authMod,fsMod]=await Promise.all([import(`${FB_VER}/firebase-app.js`),import(`${FB_VER}/firebase-auth.js`),import(`${FB_VER}/firebase-firestore.js`)]);
-  }catch(e){gatePreview();return;}
+  }catch(e){
+    showGate(`<div class="gate"><div class="seal">O</div><h2>Couldn’t load the app</h2><p>The sign-in libraries didn’t load. Check your internet connection and refresh the page. If you opened this inside another app, open it in Safari or Chrome instead.</p></div>`);
+    return;
+  }
   Object.assign(FB,authMod,fsMod);
   const app=appMod.initializeApp(FIREBASE_CONFIG);
   auth=authMod.getAuth(app);db=fsMod.getFirestore(app);
-  wireDrop();
-  authMod.onAuthStateChanged(auth,u=>{
-    me=u;renderAuth();
-    if(!u){gateSignIn();return;}
-    hideGate();
-    fsMod.onSnapshot(fsMod.collection(db,'topics'),snap=>{
-      topicsCache=snap.docs.map(d=>{const x=d.data();return{id:d.id,...x,atMs:x.at&&x.at.toMillis?x.at.toMillis():Date.now()};});
-      renderBoard();
-    });
-    fsMod.onSnapshot(fsMod.doc(db,'material','current'),d=>{materialCache=d.exists()?d.data():null;renderMaterial();});
+
+  fsMod.onSnapshot(fsMod.doc(db,'config','roles'),d=>{
+    const data=d.exists()?d.data():{};
+    roles={admins:data.admins||[],banned:data.banned||[]};
+    rolesLoaded=true;applyAccess();
+  },err=>{rolesLoaded=true;applyAccess();});
+
+  fsMod.onSnapshot(fsMod.collection(db,'topics'),snap=>{
+    topicsCache=snap.docs.map(d=>{const x=d.data();return{id:d.id,...x,atMs:x.at&&x.at.toMillis?x.at.toMillis():Date.now()};});
+    if($('app').style.display!=='none')renderBoard();
   });
+
+  authMod.onAuthStateChanged(auth,u=>{me=u;applyAccess();});
 }
 boot();
 </script>
